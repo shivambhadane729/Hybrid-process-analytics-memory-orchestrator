@@ -1,32 +1,48 @@
-# Adaptive OS Memory Engine (CLI Version)
+# Adaptive OS Memory Engine (Linux CLI)
 
-A sophisticated system monitor for Linux that performs real-time process analysis, hotness scoring, and simulated multi-layer storage distribution using advanced data structures.
+A high-performance system telemetry and memory optimization engine migrated from Windows to Linux. It uses advanced data structures to analyze process "hotness" and provides an interactive terminal dashboard.
 
 ## Features
-- **Real-time Linux Process Scanning**: Uses \`/proc\` filesystem and \`sysinfo\`.
-- **Advanced Data Structures**: Implementation of RB-Tree, Skip List, Max Heap, LRU Cache, Segment Tree, and Fenwick Tree for telemetry analytics.
-- **Adaptive Scoring**: Processes are classified as **HOT**, **WARM**, or **COLD** based on CPU, Memory, Frequency, and Recency.
-- **Priority Management**: Automatically boosts system priority (\`nice\`/\`setpriority\`) for "HOT" processes.
-- **Pure Terminal UI**: Lightweight, interactive dashboard for monitoring system performance.
+- **Real-time Monitoring**: Live process telemetry via \`/proc\`.
+- **Hotness Scoring**: Multi-metric algorithm (CPU, RAM, Frequency, Recency).
+- **Process Control**: Freeze (\`SIGSTOP\`) and Resume (\`SIGCONT\`) any process.
+- **Priority Management**: Automatic \`nice\` value adjustment based on hotness.
+- **Storage Tiering**: Simulated L1/L2/L3 memory hierarchy.
+- **Memory Waste Detection**: Identifies idle processes consuming high RAM.
+
+## Data Structures Used
+- **Red-Black Tree & Skip List**: For sorted ranking.
+- **Max Heap**: For Top-K hot processes.
+- **Fenwick & Segment Trees**: For frequency and time-series analysis.
+- **LRU Cache**: For recency tracking.
 
 ## Prerequisites
-- C++17 Compiler (GCC/Clang)
-- CMake 3.10+
-- Linux (Ubuntu/Debian recommended)
+- **OS**: Ubuntu / Debian / Linux
+- **Tools**: \`cmake\`, \`g++\`, \`make\`
+- **Permissions**: Root (sudo) is required for process priority and freezing features.
 
-## Build and Run
+## How to Build
 \`\`\`bash
-mkdir build
-cd build
+# Create build directory
+mkdir -p build && cd build
+
+# Configure and Build
 cmake ..
 make
-sudo ./analyzer_cli
 \`\`\`
-*Note: \`sudo\` is required to collect advanced metrics and apply priority changes.*
 
-## Project Structure
-- **main_cli.cpp**: Entry point for the terminal dashboard.
-- **analyzer.h**: Core logic and data structure coordination.
-- **i_process_collector.h**: OS abstraction layer.
-- **linux_process_collector.h**: Linux-specific implementation for process scanning.
-- **data_structures.h**: Implementation of all ranking and scoring algorithms.
+## How to Run
+Run the analyzer with \`sudo\` to enable the prioritization and freezing features:
+\`\`\`bash
+sudo ./build/analyzer_cli
+\`\`\`
+
+## Interactive Controls
+While the application is running, use these keys to switch views:
+- **\`m\`**: Main Dashboard (Top processes)
+- **\`w\`**: Memory Waste Analysis
+- **\`d\`**: Data Structure Metrics
+- **\`l\`**: Storage Layer Status
+- **\`f\`**: Freeze a process (Prompts for PID)
+- **\`r\`**: Resume a process (Prompts for PID)
+- **\`q\`**: Quit the application
