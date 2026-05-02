@@ -3,12 +3,15 @@
 
 #include "data_structures.h"
 #include "process_collector.h"
+#include "storage_engine.h"
+#include "fault_monitor.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <deque>
 
 using namespace std;
 
@@ -71,6 +74,13 @@ public:
         cout << "  |  [13] Show Red-Black Tree Sorted View                  |\n";
         cout << "  |  [14] Score Range Query (RB Tree)                      |\n";
         cout << "  |  [15] Generate Graph Data (for Python)                 |\n";
+        cout << "  |                                                        |\n";
+        cout << "  |  " << "\033[1;35m" << "--- Storage Engine & Fault Monitor ---" << "\033[0m" << "          |\n";
+        cout << "  |  [16] Storage Layer Distribution                       |\n";
+        cout << "  |  [17] Page Fault Analysis (OS Data)                    |\n";
+        cout << "  |  [18] Data Movement Log                                |\n";
+        cout << "  |  [19] Simulate Access & Optimize                       |\n";
+        cout << "  |                                                        |\n";
         cout << "  |  [0]  Exit                                             |\n";
         cout << "  |                                                        |\n";
         cout << "  " << string(60, '=') << "\n";
@@ -540,7 +550,7 @@ public:
             return;
         }
 
-        file << "Name,PID,MemoryMB,CPU,ActiveTimeMin,FocusCount,HotnessScore,Classification,LastUsedSecAgo,ForegroundDur,BackgroundDur\n";
+        file << "Name,PID,MemoryMB,CPU,ActiveTimeMin,FocusCount,HotnessScore,Classification,LastUsedSecAgo,ForegroundDur,BackgroundDur,PageFaults,PeakWSKB,PagefileKB,StorageLayer\n";
 
         time_t now = time(nullptr);
         for (auto& p : processes) {
@@ -555,12 +565,192 @@ public:
                  << p.classification << ","
                  << fixed << setprecision(0) << secAgo << ","
                  << fixed << setprecision(2) << p.foregroundDur << ","
-                 << fixed << setprecision(2) << p.backgroundDur << "\n";
+                 << fixed << setprecision(2) << p.backgroundDur << ","
+                 << p.pageFaultCount << ","
+                 << fixed << setprecision(2) << p.peakWorkingSetKB << ","
+                 << fixed << setprecision(2) << p.pagefileUsageKB << ","
+                 << p.storageLayer << "\n";
         }
 
         file.close();
         cout << "\n  [OK] Graph data saved to: " << filename << "\n";
         cout << "  Run: python graph_generator.py to generate graphs.\n";
+    }
+
+    // ========================== NEW FEATURE DISPLAYS ==========================
+
+    // [16] Storage Layer Distribution
+    static void displayStorageDistribution(const StorageEngine& engine) {
+        printHeader("STORAGE LAYER DISTRIBUTION");
+
+        int l1 = engine.getL1Count();
+        int l2 = engine.getL2Count();
+        int l3 = engine.getL3Count();
+        int total = l1 + l2 + l3;
+        if (total == 0) { cout << "\n  No data.\n"; return; }
+
+        int barWidth = 40;
+        auto drawBar = [&](const string& label, int count, const string& color) {
+            int filled = (int)((double)count / total * barWidth);
+            double pct = (double)count / total * 100.0;
+            cout << "\n  " << color << setw(12) << left << label << resetColor()
+                 << " [";
+            for (int i = 0; i < barWidth; i++)
+                cout << (i < filled ? "#" : ".");
+            cout << "] " << count << "/" << total
+                 << " (" << fixed << setprecision(1) << pct << "%)\n";
+        };
+
+        cout << "\n  " << "\033[1;37m" << "Layer Capacity Utilization:" << resetColor() << "\n";
+        drawBar("L1 CACHE", l1, "\033[1;31m");
+        drawBar("L2 RAM",   l2, "\033[1;33m");
+        drawBar("L3 DISK",  l3, "\033[1;36m");
+
+        // Cache stats
+        cout << "\n";
+        printSeparator();
+        cout << "  Cache Hit Rate:    " << fixed << setprecision(1)
+             << engine.getCacheHitRate() << "%\n";
+        cout << "  Total Accesses:    " << engine.getTotalAccesses() << "\n";
+        cout << "  Cache Hits:        " << engine.getCacheHits() << "\n";
+        cout << "  Cache Misses:      " << engine.getCacheMisses() << "\n";
+
+        // Show top L1 processes
+        vector<ProcessData> l1Procs = engine.getL1Processes();
+        if (!l1Procs.empty()) {
+            cout << "\n  " << "\033[1;31m" << "--- L1 Cache (HOT) Processes ---" << resetColor() << "\n";
+            for (int i = 0; i < min(5, (int)l1Procs.size()); i++) {
+                cout << "  " << "\033[1;31m" << "  > "
+                     << ProcessCollector::cleanName(l1Procs[i].name)
+                     << " (Score: " << fixed << setprecision(1) << l1Procs[i].hotnessScore
+                     << ", Mem: " << fixed << setprecision(0) << l1Procs[i].memoryMB << "MB)"
+                     << resetColor() << "\n";
+            }
+        }
+    }
+
+    // [17] Page Fault Analysis
+    static void displayPageFaultAnalysis(const vector<FaultMonitor::FaultSummary>& summaries,
+                                         const vector<ProcessData>& topFaulters,
+                                         double correlation) {
+        printHeader("PAGE FAULT ANALYSIS (Real OS Data)");
+
+        // Summary by classification
+        cout << "\n  " << "\033[1;37m" << "Fault Summary by Classification:" << "\033[0m" << "\n\n";
+        cout << "  " << left
+             << setw(10) << "Class"
+             << setw(10) << "Count"
+             << setw(16) << "Avg Faults"
+             << setw(18) << "Avg Pagefile(KB)"
+             << setw(18) << "Avg PeakWS(KB)"
+             << "\n";
+        printSeparator();
+
+        for (auto& fs : summaries) {
+            string color = "\033[0m";
+            if (fs.classification == "HOT") color = "\033[1;31m";
+            else if (fs.classification == "WARM") color = "\033[1;33m";
+            else color = "\033[1;36m";
+
+            cout << "  " << color << left
+                 << setw(10) << fs.classification
+                 << setw(10) << fs.processCount
+                 << setw(16) << fixed << setprecision(0) << fs.avgFaults
+                 << setw(18) << fixed << setprecision(0) << fs.avgPagefileKB
+                 << setw(18) << fixed << setprecision(0) << fs.avgPeakWSKB
+                 << "\033[0m" << "\n";
+        }
+
+        // Correlation
+        cout << "\n  Fault-Score Correlation (Pearson r): "
+             << "\033[1;35m" << fixed << setprecision(3) << correlation << "\033[0m";
+        if (correlation > 0.3) cout << " (positive — higher score = more faults)";
+        else if (correlation < -0.3) cout << " (negative — lower score = more faults, expected!)";
+        else cout << " (weak correlation)";
+        cout << "\n";
+
+        // Top faulters
+        if (!topFaulters.empty()) {
+            cout << "\n  " << "\033[1;37m" << "Top Page Faulters:" << "\033[0m" << "\n\n";
+            cout << "  " << left
+                 << setw(25) << "Process"
+                 << setw(14) << "Page Faults"
+                 << setw(14) << "Pagefile(KB)"
+                 << setw(10) << "Class"
+                 << "\n";
+            printSeparator();
+            for (auto& p : topFaulters) {
+                cout << "  " << left
+                     << setw(25) << ProcessCollector::cleanName(p.name)
+                     << setw(14) << p.pageFaultCount
+                     << setw(14) << fixed << setprecision(0) << p.pagefileUsageKB
+                     << classColor(p.classification)
+                     << setw(10) << p.classification
+                     << resetColor() << "\n";
+            }
+        }
+    }
+
+    // [18] Data Movement Log
+    static void displayMovementLog(const deque<MovementEvent>& log) {
+        printHeader("DATA MOVEMENT LOG (Promotion / Demotion)");
+
+        if (log.empty()) {
+            cout << "\n  No movement events yet. Use [19] to simulate access.\n";
+            return;
+        }
+
+        cout << "\n  " << left
+             << setw(25) << "Process"
+             << setw(14) << "From"
+             << setw(14) << "To"
+             << setw(25) << "Reason"
+             << "\n";
+        printSeparator();
+
+        int shown = 0;
+        for (auto it = log.rbegin(); it != log.rend() && shown < 30; ++it, ++shown) {
+            string fromColor = "\033[0m";
+            string toColor = "\033[0m";
+            if (it->fromLayer == "L1_CACHE") fromColor = "\033[1;31m";
+            else if (it->fromLayer == "L2_RAM") fromColor = "\033[1;33m";
+            else fromColor = "\033[1;36m";
+            if (it->toLayer == "L1_CACHE") toColor = "\033[1;31m";
+            else if (it->toLayer == "L2_RAM") toColor = "\033[1;33m";
+            else toColor = "\033[1;36m";
+
+            cout << "  " << left
+                 << setw(25) << ProcessCollector::cleanName(it->processName)
+                 << fromColor << setw(14) << it->fromLayer << "\033[0m"
+                 << toColor   << setw(14) << it->toLayer   << "\033[0m"
+                 << setw(25) << it->reason
+                 << "\n";
+        }
+
+        cout << "\n  Total events: " << log.size() << "\n";
+    }
+
+    // [19] Simulate Access & Optimize — result display
+    static void displayAccessResult(const ProcessData& p, bool found) {
+        printHeader("SIMULATE ACCESS & OPTIMIZE");
+
+        if (!found) {
+            cout << "\n  " << "\033[1;31m" << "[!] Process not found." << "\033[0m" << "\n";
+            return;
+        }
+
+        string layerColor = "\033[1;36m";
+        if (p.storageLayer == "L1_CACHE") layerColor = "\033[1;31m";
+        else if (p.storageLayer == "L2_RAM") layerColor = "\033[1;33m";
+
+        cout << "\n  Process: " << "\033[1;37m" << ProcessCollector::cleanName(p.name) << "\033[0m\n";
+        cout << "  PID:     " << p.pid << "\n";
+        cout << "  Score:   " << fixed << setprecision(1) << p.hotnessScore << "\n";
+        cout << "  Class:   " << classColor(p.classification) << p.classification << resetColor() << "\n";
+        cout << "  Layer:   " << layerColor << p.storageLayer << resetColor() << "\n";
+        cout << "  Memory:  " << fixed << setprecision(1) << p.memoryMB << " MB\n";
+        cout << "  Faults:  " << p.pageFaultCount << "\n";
+        cout << "\n  " << "\033[1;32m" << "[OK] Access recorded. Process may have been promoted." << "\033[0m" << "\n";
     }
 };
 

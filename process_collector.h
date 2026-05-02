@@ -52,6 +52,10 @@ public:
                     PROCESS_MEMORY_COUNTERS pmc;
                     if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
                         pd.memoryMB = pmc.WorkingSetSize / (1024.0 * 1024.0);
+                        // === NEW: Extract page fault data ===
+                        pd.pageFaultCount = pmc.PageFaultCount;
+                        pd.peakWorkingSetKB = pmc.PeakWorkingSetSize / 1024.0;
+                        pd.pagefileUsageKB = pmc.PagefileUsage / 1024.0;
                     }
 
                     // Get process times

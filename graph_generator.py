@@ -202,6 +202,69 @@ def graph6_priority_ranking(df):
     print("  [OK] graph6_priority_ranking.png")
 
 
+def graph7_storage_distribution(df):
+    """Graph 7: Storage Layer Distribution"""
+    if 'StorageLayer' not in df.columns:
+        print("  [SKIP] graph7 - StorageLayer column not found (re-export CSV with option [15])")
+        return
+
+    fig, ax = plt.subplots()
+    layer_counts = df['StorageLayer'].value_counts()
+
+    layer_order = ['L1_CACHE', 'L2_RAM', 'L3_DISK']
+    layer_labels = ['L1 Cache (HOT)', 'L2 RAM (WARM)', 'L3 Disk (COLD)']
+    layer_colors = ['#e94560', '#f5a623', '#0f3460']
+
+    counts = [layer_counts.get(l, 0) for l in layer_order]
+
+    bars = ax.bar(layer_labels, counts, color=layer_colors, edgecolor='#eee', linewidth=0.8)
+
+    for bar, val in zip(bars, counts):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.3,
+                str(val), ha='center', fontsize=11, color='#eee', fontweight='bold')
+
+    ax.set_ylabel('Number of Processes')
+    ax.set_title('Storage Layer Distribution (3-Tier Engine)', fontsize=14,
+                 fontweight='bold', color='#bb86fc')
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig('graph7_storage_distribution.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print("  [OK] graph7_storage_distribution.png")
+
+
+def graph8_faults_vs_memory(df):
+    """Graph 8: Page Faults vs Memory (Scatter)"""
+    if 'PageFaults' not in df.columns:
+        print("  [SKIP] graph8 - PageFaults column not found (re-export CSV with option [15])")
+        return
+
+    fig, ax = plt.subplots()
+
+    for cls in ['HOT', 'WARM', 'COLD']:
+        subset = df[df['Classification'] == cls]
+        ax.scatter(subset['MemoryMB'], subset['PageFaults'],
+                   c=COLORS[cls], label=cls, s=100, alpha=0.8,
+                   edgecolors='white', linewidth=0.5)
+
+        for _, row in subset.iterrows():
+            ax.annotate(row['Name'], (row['MemoryMB'], row['PageFaults']),
+                        fontsize=7, color='#ccc', xytext=(5, 5), textcoords='offset points')
+
+    ax.set_xlabel('Memory Usage (MB)')
+    ax.set_ylabel('Page Fault Count')
+    ax.set_title('Page Faults vs Memory Usage', fontsize=14,
+                 fontweight='bold', color='#e94560')
+    ax.legend(framealpha=0.5)
+    ax.grid(alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig('graph8_faults_vs_memory.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print("  [OK] graph8_faults_vs_memory.png")
+
+
 def main():
     print("\n  " + "=" * 50)
     print("  ADAPTIVE PROCESS ANALYZER - Graph Generator")
@@ -218,8 +281,10 @@ def main():
     graph4_classification_pie(df)
     graph5_recency_timeline(df)
     graph6_priority_ranking(df)
+    graph7_storage_distribution(df)
+    graph8_faults_vs_memory(df)
 
-    print("\n  All 6 graphs generated successfully!")
+    print("\n  All graphs generated successfully!")
     print("  Files saved in current directory.\n")
 
 

@@ -32,11 +32,19 @@ struct ProcessData {
     double hotnessScore;   // Computed score
     string classification; // HOT / WARM / COLD
 
+    // === NEW: Page Fault & Storage Layer fields ===
+    unsigned long pageFaultCount;   // OS page fault count
+    double peakWorkingSetKB;        // Peak working set in KB
+    double pagefileUsageKB;         // Pagefile usage in KB
+    string storageLayer;            // L1_CACHE / L2_RAM / L3_DISK
+
     ProcessData()
         : pid(0), memoryMB(0), cpuPercent(0), startTime(0),
           activeTimeMin(0), lastUsedTime(0), focusCount(0),
           foregroundDur(0), backgroundDur(0), hotnessScore(0),
-          classification("COLD") {}
+          classification("COLD"),
+          pageFaultCount(0), peakWorkingSetKB(0), pagefileUsageKB(0),
+          storageLayer("L3_DISK") {}
 };
 
 // ========================== 1. HASH MAP ==========================
