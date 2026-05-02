@@ -189,6 +189,9 @@ public:
     LRUList& getLRUList() { return lruList; }
     SegmentTree& getSegTree() { return segTree; }
     FenwickTree& getFenwickTree() { return fenwickTree; }
+
+    bool freezeProcess(int pid) { return collector->freezeProcess(pid); }
+    bool resumeProcess(int pid) { return collector->resumeProcess(pid); }
 };
 
 #endif
