@@ -205,6 +205,44 @@ public:
     RBTreeRanking& getRBTree() { return rbTree; }
     SkipList& getSkipList() { return skipList; }
     LRUList& getLRUList() { return lruList; }
+    SegmentTree& getSegTree() { return segTree; }
+    FenwickTree& getFenwickTree() { return fenwickTree; }
+
+    string findProcessLayer(int pid) { return storageEngine.findProcessLayer(pid); }
+    int getCumulativeFrequency(int n) { return fenwickTree.query(n); }
+    void getRecommendations(vector<ProcessData>& keepHigh, vector<ProcessData>& deprioritize) {
+        keepHigh = getTopK(3);
+        vector<ProcessData> all = hashMap.getAll();
+        sort(all.begin(), all.end(), [](const ProcessData& a, const ProcessData& b) { return a.hotnessScore < b.hotnessScore; });
+        for (int i = 0; i < min((int)all.size(), 3); i++) deprioritize.push_back(all[i]);
+    }
+
+    RelocationImpact getRelocationImpact(int pid, const string& targetLayer) {
+        return storageEngine.getRelocationImpact(pid, targetLayer);
+    }
+
+    bool moveProcess(int pid, const string& targetLayer, string& errorMsg) {
+        return storageEngine.moveProcess(pid, targetLayer, errorMsg, &hashMap.getMap());
+    }
+
+    std::vector<PlacementSuggestion> getSmartSuggestions() {
+        return storageEngine.getSmartSuggestions();
+    }
+
+    bool simulateAccess(int pid, ProcessData& result) {
+        if (hashMap.find(pid, result)) {
+            return true;
+        }
+        return false;
+    }
+
+    std::vector<FaultMonitor::FaultSummary> getFaultSummaries() { return FaultMonitor::analyzeByClassification(hashMap.getAll()); }
+    double getFaultCorrelation() { return FaultMonitor::faultScoreCorrelation(hashMap.getAll()); }
+    std::vector<ProcessData> getTopFaulters(int k) {
+        return FaultMonitor::getTopFaulters(hashMap.getAll(), k);
+    }
+
+    StorageEngine& getStorageEngine() { return storageEngine; }
     
     bool freezeProcess(int pid) { return collector->freezeProcess(pid); }
     bool resumeProcess(int pid) { return collector->resumeProcess(pid); }
