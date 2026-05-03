@@ -86,6 +86,8 @@ public:
 
         if (processes.empty()) return;
 
+        fenwickTree.init((int)processes.size());
+
         // Calculate scores before sorting
         calculateAllScores(processes);
 
@@ -103,10 +105,12 @@ public:
             lruList.access(p);
             rbTree.insert(p);
             skipList.insert(p);
+
+            // Update Fenwick Tree with focus count
+            fenwickTree.update(idx + 1, p.focusCount);
             idx++;
         }
 
-        fenwickTree.init((int)processes.size());
         vector<double> timeSlots(processes.size(), 0);
         for (int i = 0; i < (int)processes.size(); i++) timeSlots[i] = processes[i].activeTimeMin;
         segTree.build(timeSlots);
