@@ -18,6 +18,7 @@ MainWindow::MainWindow(Analyzer* analyzer, QWidget* parent)
     : QMainWindow(parent), m_analyzer(analyzer)
 {
     setupUI();
+    m_refreshTimer->start(2000); // Trigger auto-refresh every 2 seconds by default
     QTimer::singleShot(100, this, &MainWindow::onRefresh);
 }
 
@@ -58,52 +59,13 @@ void MainWindow::setupUI() {
 
     headerLayout->addWidget(logo);
     headerLayout->addWidget(subtitle);
-    headerLayout->addStretch();
-
-    // Refresh controls
-    QPushButton* refreshBtn = new QPushButton("Refresh");
-    refreshBtn->setFixedHeight(30);
-    refreshBtn->setStyleSheet(
-        "QPushButton { background: #10B981; color: white; border-radius: 4px;"
-        "  font-weight: 600; font-size: 11px; padding: 0 16px; }"
-        "QPushButton:hover { background: #34D399; }"
-        "QPushButton:pressed { background: #059669; }"
-    );
-    connect(refreshBtn, &QPushButton::clicked, this, &MainWindow::onRefresh);
-
-    m_autoRefreshCheck = new QCheckBox("Auto");
-    m_autoRefreshCheck->setChecked(false);
-    m_autoRefreshCheck->setStyleSheet(
-        "QCheckBox { color: #64748B; font-size: 11px; background: transparent; border: none; }"
-        "QCheckBox::indicator { width: 14px; height: 14px;"
-        "  border: 1px solid #E2E8F0; border-radius: 3px; background: #FFFFFF; }"
-        "QCheckBox::indicator:checked { background: #059669; border-color: #059669; }"
-    );
+    // Auto-refresh control (Internal)
+    m_autoRefreshCheck = new QCheckBox();
+    m_autoRefreshCheck->setChecked(true);
+    m_autoRefreshCheck->setVisible(false);
     connect(m_autoRefreshCheck, &QCheckBox::toggled, this, &MainWindow::onAutoRefreshToggled);
 
-    m_liveIndicator = new QLabel(" ● LIVE ");
-    m_liveIndicator->setStyleSheet(
-        "color: #10B981; font-weight: 800; font-size: 10px;"
-        "background: rgba(16, 185, 129, 0.15);"
-        "border: 1px solid #10B981; border-radius: 4px; padding: 2px 6px;"
-    );
-    m_liveIndicator->setVisible(false);
-
-    m_statusLabel = new QLabel("Ready");
-    m_statusLabel->setStyleSheet(
-        "color: #10B981; font-weight: 600; font-size: 11px;"
-        "background: rgba(16, 185, 129, 0.10);"
-        "border: 1px solid rgba(16, 185, 129, 0.20);"
-        "border-radius: 10px; padding: 3px 12px;"
-    );
-
-    headerLayout->addWidget(m_liveIndicator);
-    headerLayout->addSpacing(8);
-    headerLayout->addWidget(m_statusLabel);
-    headerLayout->addSpacing(8);
-    headerLayout->addWidget(m_autoRefreshCheck);
-    headerLayout->addSpacing(4);
-    headerLayout->addWidget(refreshBtn);
+    headerLayout->addStretch();
 
     root->addWidget(header);
 
@@ -139,24 +101,11 @@ void MainWindow::setupUI() {
 }
 
 void MainWindow::onRefresh() {
-    m_statusLabel->setText("Collecting...");
-    m_statusLabel->setStyleSheet(
-        "color: #F59E0B; font-weight: 600; font-size: 11px;"
-        "background: rgba(245, 158, 11, 0.10);"
-        "border: 1px solid rgba(245, 158, 11, 0.20);"
-        "border-radius: 10px; padding: 3px 12px;"
-    );
     QApplication::processEvents();
 
     m_analyzer->collectAndStore();
 
     int count = (int)m_analyzer->getAllProcesses().size();
-    m_statusLabel->setText(QString("%1 processes").arg(count));
-    m_statusLabel->setStyleSheet(
-        "color: #059669; font-weight: 600; font-size: 11px;"
-        "background: #D1FAE5; border: 1px solid #A7F3D0;"
-        "border-radius: 10px; padding: 3px 12px;"
-    );
     statusBar()->showMessage(QString("Collected %1 processes").arg(count));
 
     emit dataRefreshed();
@@ -169,9 +118,7 @@ void MainWindow::forceRefresh() {
 void MainWindow::onAutoRefreshToggled(bool checked) {
     if (checked) {
         m_refreshTimer->start(1000);
-        m_liveIndicator->setVisible(true);
     } else {
         m_refreshTimer->stop();
-        m_liveIndicator->setVisible(false);
     }
 }

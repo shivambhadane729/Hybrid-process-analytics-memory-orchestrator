@@ -34,8 +34,6 @@ private:
     Analyzer*        m_analyzer;
     QTabWidget*      m_tabWidget;
     QTimer*          m_refreshTimer;
-    QLabel*          m_statusLabel;
-    QLabel*          m_liveIndicator;
     QCheckBox*       m_autoRefreshCheck;
 
     DashboardTab*    m_dashboardTab;

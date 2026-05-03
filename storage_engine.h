@@ -275,7 +275,7 @@ public:
 
     // =================== CLASSIFY & DISTRIBUTE ===================
     // Called after collectAndStore() to place processes into layers
-    void classifyAndDistribute(const vector<ProcessData>& processes) {
+    void classifyAndDistribute(const vector<ProcessData>& processes, unordered_map<int, string>* history = nullptr) {
         // Clear layers
         l1Cache.clear();
         l2Ram.clear();
@@ -295,17 +295,27 @@ public:
 
         for (int i = 0; i < (int)sorted.size(); i++) {
             ProcessData p = sorted[i];
+            string targetLayer;
             if (i < l1Capacity) {
-                p.storageLayer = "L1_CACHE";
+                targetLayer = "L1_CACHE";
                 l1Cache[p.pid] = p;
                 l1EvictionHeap.push({p.hotnessScore, p.pid});
             } else if (i < l1Capacity + l2Capacity) {
-                p.storageLayer = "L2_RAM";
+                targetLayer = "L2_RAM";
                 l2Ram[p.hotnessScore].push_back(p);
             } else {
-                p.storageLayer = "L3_DISK";
+                targetLayer = "L3_DISK";
                 l3Disk.push_back(p);
             }
+
+            p.storageLayer = targetLayer;
+            if (history && history->count(p.pid)) {
+                string prevLayer = (*history)[p.pid];
+                if (prevLayer != targetLayer) {
+                    logMovement(p, prevLayer, targetLayer, "Dynamic Hotness Update", p.hotnessScore);
+                }
+            }
+            if (history) (*history)[p.pid] = targetLayer;
         }
     }
 

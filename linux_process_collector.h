@@ -120,19 +120,35 @@ private:
         pd.cpuPercent = (seconds > 0) ? (total_time / seconds) * 100.0 : 0.0;
         pd.activeTimeMin = seconds / 60.0;
 
-        // Memory Usage from /proc/pid/status (more reliable for RSS)
+        // Memory and Faults from /proc/pid/status
         std::string statusPath = "/proc/" + std::to_string(pid) + "/status";
         std::ifstream statusFile(statusPath);
         std::string sline;
         pd.memoryMB = 0;
+        pd.pageFaultCount = 0;
+        pd.pagefileUsageKB = 0; 
+        pd.peakWorkingSetKB = 0;
+
         while (std::getline(statusFile, sline)) {
             if (sline.substr(0, 6) == "VmRSS:") {
                 std::stringstream sss(sline.substr(6));
-                long rss_kb;
-                sss >> rss_kb;
-                pd.memoryMB = rss_kb / 1024.0;
-                break;
+                long kb; sss >> kb;
+                pd.memoryMB = kb / 1024.0;
+            } else if (sline.substr(0, 7) == "VmPeak:") {
+                std::stringstream sss(sline.substr(7));
+                long kb; sss >> kb;
+                pd.peakWorkingSetKB = kb;
+            } else if (sline.substr(0, 7) == "VmSwap:") {
+                std::stringstream sss(sline.substr(7));
+                long kb; sss >> kb;
+                pd.pagefileUsageKB = kb;
             }
+        }
+
+        // Get minor/major faults from /proc/pid/stat
+        // Field 10 is minor faults, 12 is major faults
+        if (tokens.size() > 12) {
+            pd.pageFaultCount = std::stoul(tokens[7]) + std::stoul(tokens[9]); // minflt + majflt
         }
 
         return true;

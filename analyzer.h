@@ -42,6 +42,7 @@ public:
 
     StorageEngine storageEngine;
     FaultMonitor faultMonitor;
+    unordered_map<int, string> layerHistory;
 
     unordered_map<int, string> manualOverrides;
     int lastActionPid = -1;
@@ -111,7 +112,7 @@ public:
         segTree.build(timeSlots);
 
         maxHeap.buildFromVector(processes);
-        storageEngine.classifyAndDistribute(processes);
+        storageEngine.classifyAndDistribute(processes, &layerHistory);
 
         for (auto& pair : manualOverrides) {
             string error;

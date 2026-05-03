@@ -551,56 +551,62 @@ void DSVisualizerTab::drawSegmentTree() {
 void DSVisualizerTab::drawFenwickTree() {
     m_fenwickScene->clear();
     int n = m_analyzer->fenwickTree.getSize();
-    if (n == 0) return;
+    if (n <= 0) return;
 
-    int showN = std::min(20, n);
-    double barW = 36, gap = 5, barMaxH = 220;
-    double startX = 55, baseY = 270;
+    int showN = std::min(15, n);
+    double barW = 45, gap = 15, barMaxH = 200;
+    double startX = 60, baseY = 280;
 
     auto* title = m_fenwickScene->addText(
-        QString("Fenwick Tree (BIT) — Cumulative Focus Count (%1 entries)").arg(showN),
-        QFont("Segoe UI", 10, QFont::Bold));
+        QString("Fenwick Tree (BIT) — Cumulative Focus Distribution"),
+        QFont("Segoe UI", 11, QFont::Bold));
     title->setDefaultTextColor(DS::accent());
     title->setPos(startX, 0);
 
-    int maxVal = m_analyzer->getCumulativeFrequency(showN);
-    if (maxVal == 0) maxVal = 1;
+    // Get max value for scaling
+    int maxTotal = 0;
+    for (int i = 1; i <= showN; i++) {
+        int v = m_analyzer->getCumulativeFrequency(i);
+        if (v > maxTotal) maxTotal = v;
+    }
+    if (maxTotal == 0) maxTotal = 1;
 
     for (int i = 1; i <= showN; i++) {
         int prefixSum = m_analyzer->getCumulativeFrequency(i);
-        double barH = (double)prefixSum / maxVal * barMaxH;
+        double barH = ((double)prefixSum / maxTotal) * barMaxH;
+        if (barH < 5) barH = 5; // Minimum height for visibility
+
         double x = startX + (i - 1) * (barW + gap);
         double y = baseY - barH;
 
-        int intensity = (int)(255.0 * prefixSum / maxVal);
-        QColor fill(std::min(160, 50 + intensity), 40 + intensity / 4, std::max(70, 237 - intensity));
+        // Gradient color based on intensity
+        QColor baseColor = DS::accent();
+        if (i <= showN/3) baseColor = DS::green();
 
-        bool isLastAction = false;
-        if (i-1 < (int)m_analyzer->indexToPid.size()) {
-            if (m_analyzer->indexToPid[i-1] == m_analyzer->lastActionPid) isLastAction = true;
-        }
-        
-        QColor borderCol = isLastAction ? QColor("#FFD700") : DS::border();
-        double borderW = isLastAction ? 3.0 : 1.0;
-        
-        m_fenwickScene->addRect(x, y, barW, barH, QPen(borderCol, borderW), QBrush(fill));
+        QLinearGradient grad(x, y, x, baseY);
+        grad.setColorAt(0, baseColor);
+        grad.setColorAt(1, baseColor.darker(150));
 
-        auto* valText = m_fenwickScene->addText(
-            QString::number(prefixSum), QFont("Segoe UI", 7, QFont::Bold));
-        valText->setDefaultTextColor(Qt::white);
-        valText->setPos(x + barW / 2 - valText->boundingRect().width() / 2, y - 16);
+        m_fenwickScene->addRect(x, y, barW, barH, QPen(QColor("#E2E8F0"), 1), QBrush(grad));
 
-        auto* idxText = m_fenwickScene->addText(QString::number(i), QFont("Segoe UI", 7));
-        idxText->setDefaultTextColor(QColor("#484F58"));
-        idxText->setPos(x + barW / 2 - 4, baseY + 3);
+        // Value on top
+        auto* valText = m_fenwickScene->addText(QString::number(prefixSum), DS::fontBold(8));
+        valText->setDefaultTextColor(QColor("#1E293B"));
+        valText->setPos(x + barW/2 - valText->boundingRect().width()/2, y - 22);
+
+        // Index Label
+        auto* idxLabel = m_fenwickScene->addText(QString("BIT[%1]").arg(i), DS::font(7));
+        idxLabel->setPos(x + barW/2 - idxLabel->boundingRect().width()/2, baseY + 5);
+
+        // Individual contribution (node value if possible)
+        int single = prefixSum - (i > 1 ? m_analyzer->getCumulativeFrequency(i-1) : 0);
+        auto* singleText = m_fenwickScene->addText(QString("+%1").arg(single), DS::font(7));
+        singleText->setDefaultTextColor(QColor("#64748B"));
+        singleText->setPos(x + barW/2 - singleText->boundingRect().width()/2, y + 5);
     }
 
-    m_fenwickScene->addLine(startX - 8, baseY, startX + showN * (barW + gap),
-        baseY, QPen(DS::border(), 1));
-
-    auto* yLabel = m_fenwickScene->addText("Cumulative\nFocus Count", QFont("Segoe UI", 7));
-    yLabel->setDefaultTextColor(QColor("#484F58"));
-    yLabel->setPos(0, 90);
-
-    m_fenwickView->fitInView(m_fenwickScene->sceneRect().adjusted(-15, -15, 30, 30), Qt::KeepAspectRatio);
+    // Baseline
+    m_fenwickScene->addLine(startX - 20, baseY, startX + showN*(barW+gap), baseY, QPen(QColor("#94A3B8"), 2));
+    
+    m_fenwickView->fitInView(m_fenwickScene->sceneRect().adjusted(-20, -40, 20, 20), Qt::KeepAspectRatio);
 }
