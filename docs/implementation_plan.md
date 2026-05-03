@@ -1,4 +1,4 @@
-# C++ Qt Widgets GUI for Adaptive Process Usage Analyzer
+# C++ Qt Widgets GUI for Hybrid Process Analytics Memory Orchestrator
 
 ## Background
 

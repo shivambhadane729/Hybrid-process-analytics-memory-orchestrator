@@ -1,5 +1,5 @@
 """
-Graph Generator for Adaptive Process Usage Analyzer
+Graph Generator for Hybrid Process Analytics Memory Orchestrator
 Reads process_data.csv and generates 6 visualization graphs.
 
 Usage: python graph_generator.py
@@ -267,7 +267,7 @@ def graph8_faults_vs_memory(df):
 
 def main():
     print("\n  " + "=" * 50)
-    print("  ADAPTIVE PROCESS ANALYZER - Graph Generator")
+    print("  HYBRID PROCESS ANALYTICS - Graph Generator")
     print("  " + "=" * 50)
     print()
 

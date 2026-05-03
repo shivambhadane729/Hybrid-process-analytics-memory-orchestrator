@@ -13,5 +13,5 @@ if [ ! -f "$BINARY" ]; then
 fi
 
 # Run with LD_PRELOAD to resolve snap/host library conflicts
-echo "Launching Adaptive OS Memory Engine GUI..."
+echo "Launching Hybrid Process Analytics Memory Orchestrator GUI..."
 LD_PRELOAD="$LIBC_PATH $PTHREAD_PATH" $BINARY

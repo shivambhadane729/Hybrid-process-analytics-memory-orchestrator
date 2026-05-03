@@ -55,7 +55,7 @@ int main() {
             clearScreen();
             
             if (mode == 'm') {
-                cout << "========================== SYSTEM DASHBOARD (STATIC) =========================\n";
+                cout << "========================== HYBRID PROCESS ANALYTICS DASHBOARD =========================\n";
                 auto processes = analyzer.getAllProcesses();
                 sort(processes.begin(), processes.end(), [](const ProcessData& a, const ProcessData& b) {
                     return a.hotnessScore > b.hotnessScore;

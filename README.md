@@ -1,4 +1,4 @@
-# Adaptive OS Memory Engine (Version 2.0)
+# Hybrid Process Analytics Memory Orchestrator (Version 2.0)
 
 Advanced Multi-Layer Storage and Process Scoring Engine that transitions from a Windows-based simulation to a Native Linux System Utility. It performs real-time telemetry, hotness scoring, and kernel-level process priority management.
 
@@ -19,7 +19,7 @@ Advanced Multi-Layer Storage and Process Scoring Engine that transitions from a 
 
 ## Linux Core Architecture vs. Windows Simulation
 
-The Adaptive OS Memory Engine was originally conceived as a monitor for Windows 11. However, while Windows provided visibility, it lacked the deterministic control required for a Memory Engine to truly manage system resources. The migration to Linux transforms this project from an Intelligent Simulation into a Real System Control Engine.
+The Hybrid Process Analytics Memory Orchestrator was originally conceived as a monitor for Windows 11. However, while Windows provided visibility, it lacked the deterministic control required for a Memory Engine to truly manage system resources. The migration to Linux transforms this project from an Intelligent Simulation into a Real System Control Engine.
 
 ### Windows Version: Simulation-Based Architecture
 The Windows version focused on:
@@ -78,8 +78,8 @@ The engine can physically pause Frozen processes:
 ### Build Steps (Linux)
 ```bash
 # Clone the repository
-git clone https://github.com/shivambhadane729/-Multi-Layer-Storage-Engine.git
-cd -Multi-Layer-Storage-Engine
+git clone https://github.com/shivambhadane729/Hybrid-process-analytics-memory-orchestrator.git
+cd Hybrid-process-analytics-memory-orchestrator
 
 # Create build directory
 mkdir build && cd build

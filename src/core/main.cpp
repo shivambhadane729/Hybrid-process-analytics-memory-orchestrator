@@ -1,6 +1,6 @@
 /*
  * ============================================================
- *   ADAPTIVE PROCESS USAGE ANALYZER — Qt GUI Entry Point
+ *   HYBRID PROCESS ANALYTICS MEMORY ORCHESTRATOR — Qt GUI Entry Point
  * ============================================================
  */
 

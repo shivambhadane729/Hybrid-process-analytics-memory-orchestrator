@@ -25,7 +25,7 @@ MainWindow::MainWindow(Analyzer* analyzer, QWidget* parent)
 MainWindow::~MainWindow() {}
 
 void MainWindow::setupUI() {
-    setWindowTitle("Adaptive Process Analyzer");
+    setWindowTitle("Hybrid Process Analytics Memory Orchestrator");
     resize(1440, 860);
     setMinimumSize(1000, 650);
     setStyleSheet(DS::globalStyleSheet());
@@ -45,7 +45,7 @@ void MainWindow::setupUI() {
     QHBoxLayout* headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(16, 0, 16, 0);
 
-    QLabel* logo = new QLabel("ADAPTIVE PROCESS ANALYZER");
+    QLabel* logo = new QLabel("HYBRID PROCESS ANALYTICS MEMORY ORCHESTRATOR");
     logo->setStyleSheet(
         "font-size: 13px; font-weight: 700; letter-spacing: 1.5px;"
         "color: #1E293B; background: transparent; border: none;"
@@ -97,7 +97,7 @@ void MainWindow::setupUI() {
     connect(m_refreshTimer, &QTimer::timeout, this, &MainWindow::onRefresh);
 
     // Status bar
-    statusBar()->showMessage("Adaptive Process Analyzer — Ready");
+    statusBar()->showMessage("Hybrid Process Analytics Memory Orchestrator — Ready");
 }
 
 void MainWindow::onRefresh() {

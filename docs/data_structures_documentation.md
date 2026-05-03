@@ -1,6 +1,6 @@
 # 📊 Data Structure Analysis & Visualization Documentation
 
-This document provides a comprehensive technical overview of the data structures implemented in the **Adaptive Process Usage Analyzer**. It details the rationale behind choosing each structure, their computational complexities, and the logic used to plot them in the graphical interface.
+This document provides a comprehensive technical overview of the data structures implemented in the **Hybrid Process Analytics Memory Orchestrator**. It details the rationale behind choosing each structure, their computational complexities, and the logic used to plot them in the graphical interface.
 
 ---
 
